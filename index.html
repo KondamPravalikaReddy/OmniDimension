@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniDimension Auction Voice Agent</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Existing head content -->
+    <script src="https://sdk.omnidimension.com/v1/omnidimension-sdk.min.js"></script>
+
+
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        .voice-wave {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            height: 40px;
+            align-items: center;
+        }
+        .voice-wave span {
+            display: block;
+            width: 4px;
+            height: 20px;
+            background-color: #3B82F6;
+            border-radius: 4px;
+            animation: voice-animation 1.5s infinite ease-in-out;
+        }
+        .voice-wave span:nth-child(1) { animation-delay: 0.1s; }
+        .voice-wave span:nth-child(2) { animation-delay: 0.3s; }
+        .voice-wave span:nth-child(3) { animation-delay: 0.5s; }
+        .voice-wave span:nth-child(4) { animation-delay: 0.7s; }
+        .voice-wave span:nth-child(5) { animation-delay: 0.9s; }
+        @keyframes voice-animation {
+            0%, 100% { height: 10px; }
+            50% { height: 30px; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-blue-600">OmniDimension Auction Voice Agent</h1>
+            <p class="text-gray-600">Real-time voice-enabled auction participation system</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Auction Dashboard -->
+            <div class="bg-white rounded-lg shadow p-6 lg:col-span-2">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold">Live Auctions</h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="relative flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        </span>
+                        <span class="text-sm text-gray-600">Live</span>
+                    </div>
+                </div>
+
+                <div class="space-y-4" id="auction-items">
+                    <!-- Auction items will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Voice Agent Panel -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4">Voice Agent</h2>
+                
+                <div class="bg-blue-50 rounded-lg p-4 mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-medium text-blue-800">Call Simulation</h3>
+                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Active</span>
+                    </div>
+                    
+                    <div class="voice-wave mb-4" id="voice-wave">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    
+                    <div class="bg-white rounded p-3 mb-4 h-32 overflow-y-auto" id="voice-log">
+                        <p class="text-sm text-gray-600">System: Welcome to OmniDimension Auction Voice Agent. How can I help you?</p>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <input type="text" id="voice-input" placeholder="Type your voice command..." 
+                               class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button onclick="processVoiceCommand()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">Send</button>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-medium text-gray-800 mb-2">Available Voice Commands</h3>
+                    <ul class="text-sm space-y-1 text-gray-600">
+                        <li>• "What items are available?"</li>
+                        <li>• "What's the current bid for [item]?"</li>
+                        <li>• "I want to bid [amount] on [item]"</li>
+                        <li>• "Show bidding history"</li>
+                        <li>• "End call"</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div class="mt-8 bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold mb-4">Admin Dashboard</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h3 class="text-sm font-medium text-blue-800 mb-1">Total Active Auctions</h3>
+                    <p class="text-2xl font-bold text-blue-600" id="total-auctions">3</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h3 class="text-sm font-medium text-green-800 mb-1">Total Bids Today</h3>
+                    <p class="text-2xl font-bold text-green-600" id="total-bids">0</p>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <h3 class="text-sm font-medium text-purple-800 mb-1">Voice Interactions</h3>
+                    <p class="text-2xl font-bold text-purple-600" id="voice-interactions">0</p>
+                </div>
+            </div>
+            
+            <h3 class="font-medium text-gray-800 mb-2">Bidding History</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-200">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Item</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Bid Amount</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Time</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bidding-history">
+                        <!-- Bidding history will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample auction data
+        let auctions = [
+            {
+                id: 1,
+                name: "Rare Vintage Watch",
+                description: "1950s Swiss mechanical watch in excellent condition",
+                currentBid: 1200,
+                minIncrement: 100,
+                timeLeft: "15:23",
+                bids: []
+            },
+            {
+                id: 2,
+                name: "Signed Baseball",
+                description: "Baseball signed by Babe Ruth, 1927",
+                currentBid: 8500,
+                minIncrement: 500,
+                timeLeft: "08:45",
+                bids: []
+            },
+            {
+                id: 3,
+                name: "Picasso Lithograph",
+                description: "Limited edition lithograph from 1960",
+                currentBid: 4500,
+                minIncrement: 200,
+                timeLeft: "23:12",
+                bids: []
+            }
+        ];
+
+        let voiceInteractions = 0;
+        let totalBids = 0;
+
+        // Initialize the auction dashboard
+        function initAuctionDashboard() {
+            const auctionItemsContainer = document.getElementById('auction-items');
+            auctionItemsContainer.innerHTML = '';
+            
+            auctions.forEach(auction => {
+                const auctionItem = document.createElement('div');
+                auctionItem.className = 'border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition';
+                auctionItem.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-semibold text-lg">${auction.name}</h3>
+                            <p class="text-sm text-gray-600 mb-2">${auction.description}</p>
+                        </div>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${auction.timeLeft} left</span>
+                    </div>
+                    <div class="mt-2 flex justify-between items-center">
+                        <div>
+                            <p class="text-sm text-gray-500">Current Bid</p>
+                            <p class="font-bold text-xl">$${auction.currentBid.toLocaleString()}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-500">Min. Increment</p>
+                            <p class="font-medium">$${auction.minIncrement}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex space-x-2">
+                        <button onclick="placeBid(${auction.id})" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 w-full">
+                            Place Bid
+                        </button>
+                    </div>
+                `;
+                auctionItemsContainer.appendChild(auctionItem);
+            });
+        }
+
+        // Place a bid (for manual testing)
+        function placeBid(auctionId) {
+            const auction = auctions.find(a => a.id === auctionId);
+            if (!auction) return;
+            
+            const bidAmount = auction.currentBid + auction.minIncrement;
+            auction.currentBid = bidAmount;
+            auction.bids.push({
+                amount: bidAmount,
+                time: new Date().toLocaleTimeString(),
+                status: 'Accepted'
+            });
+            
+            totalBids++;
+            document.getElementById('total-bids').textContent = totalBids;
+            updateBiddingHistory();
+            initAuctionDashboard();
+            
+            // Add to voice log for demonstration
+            addToVoiceLog(`System: New bid of $${bidAmount} placed on ${auction.name}`);
+        }
+
+        // Update bidding history table
+        function updateBiddingHistory() {
+            const historyContainer = document.getElementById('bidding-history');
+            historyContainer.innerHTML = '';
+            
+            // Combine bids from all auctions
+            let allBids = [];
+            auctions.forEach(auction => {
+                auction.bids.forEach(bid => {
+                    allBids.push({
+                        item: auction.name,
+                        ...bid
+                    });
+                });
+            });
+            
+            // Sort by time (newest first)
+            allBids.sort((a, b) => new Date(`1970/01/01 ${b.time}`) - new Date(`1970/01/01 ${a.time}`));
+            
+            // Display up to 10 most recent bids
+            allBids.slice(0, 10).forEach(bid => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="py-2 px-4 border-b text-sm">${bid.item}</td>
+                    <td class="py-2 px-4 border-b text-sm font-medium">$${bid.amount.toLocaleString()}</td>
+                    <td class="py-2 px-4 border-b text-sm">${bid.time}</td>
+                    <td class="py-2 px-4 border-b text-sm">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            ${bid.status}
+                        </span>
+                    </td>
+                `;
+                historyContainer.appendChild(row);
+            });
+        }
+
+        // Voice agent functions
+        function addToVoiceLog(message) {
+            const voiceLog = document.getElementById('voice-log');
+            const logEntry = document.createElement('p');
+            logEntry.className = 'text-sm mb-1';
+            logEntry.innerHTML = message;
+            voiceLog.appendChild(logEntry);
+            voiceLog.scrollTop = voiceLog.scrollHeight;
+        }
+
+        function processVoiceCommand() {
+            const input = document.getElementById('voice-input').value.trim();
+            if (!input) return;
+            
+            voiceInteractions++;
+            document.getElementById('voice-interactions').textContent = voiceInteractions;
+            
+            addToVoiceLog(`User: ${input}`);
+            document.getElementById('voice-input').value = '';
+            
+            // Simple voice command processing
+            if (input.toLowerCase().includes('what items are available')) {
+                let response = "System: Available items are: ";
+                response += auctions.map(a => a.name).join(', ');
+                addToVoiceLog(response);
+            } 
+            else if (input.toLowerCase().includes('current bid for')) {
+                const itemName = input.match(/current bid for (.+)/i)?.[1];
+                if (itemName) {
+                    const auction = auctions.find(a => 
+                        a.name.toLowerCase().includes(itemName.toLowerCase()));
+                    if (auction) {
+                        addToVoiceLog(`System: Current bid for ${auction.name} is $${auction.currentBid}`);
+                    } else {
+                        addToVoiceLog(`System: I couldn't find that item. Available items are: ${auctions.map(a => a.name).join(', ')}`);
+                    }
+                }
+            }
+            else if (input.toLowerCase().includes('i want to bid')) {
+                const match = input.match(/i want to bid (\d+) on (.+)/i);
+                if (match) {
+                    const amount = parseInt(match[1]);
+                    const itemName = match[2];
+                    const auction = auctions.find(a => 
+                        a.name.toLowerCase().includes(itemName.toLowerCase()));
+                    
+                    if (auction) {
+                        if (amount > auction.currentBid) {
+                            auction.currentBid = amount;
+                            auction.bids.push({
+                                amount: amount,
+                                time: new Date().toLocaleTimeString(),
+                                status: 'Accepted'
+                            });
+                            totalBids++;
+                            document.getElementById('total-bids').textContent = totalBids;
+                            updateBiddingHistory();
+                            initAuctionDashboard();
+                            addToVoiceLog(`System: Your bid of $${amount} on ${auction.name} has been accepted!`);
+                        } else {
+                            addToVoiceLog(`System: Your bid must be higher than the current bid of $${auction.currentBid}`);
+                        }
+                    } else {
+                        addToVoiceLog(`System: I couldn't find that item. Available items are: ${auctions.map(a => a.name).join(', ')}`);
+                    }
+                } else {
+                    addToVoiceLog("System: Please specify your bid amount and item, like: 'I want to bid 1500 on Rare Vintage Watch'");
+                }
+            }
+            else if (input.toLowerCase().includes('show bidding history')) {
+                addToVoiceLog("System: Showing bidding history in the admin dashboard below.");
+            }
+            else if (input.toLowerCase().includes('end call')) {
+                addToVoiceLog("System: Thank you for using OmniDimension Auction Voice Agent. Goodbye!");
+                setTimeout(() => {
+                    document.getElementById('voice-log').innerHTML = '<p class="text-sm text-gray-600">System: Welcome to OmniDimension Auction Voice Agent. How can I help you?</p>';
+                }, 2000);
+            }
+            else {
+                addToVoiceLog("System: I didn't understand that. You can ask about available items, current bids, or place a new bid.");
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            initAuctionDashboard();
+            updateBiddingHistory();
+            
+            // Simulate some initial bids for demonstration
+            setTimeout(() => {
+                placeBid(1); // Place bid on Rare Vintage Watch
+            }, 2000);
+            
+            setTimeout(() => {
+                placeBid(2); // Place bid on Signed Baseball
+            }, 4000);
+        });
+    </script>
+</body>
+</html>
