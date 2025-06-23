@@ -40,6 +40,10 @@ This solves the problem of enabling hands-free, real-time auction participation 
 
 - [Insert your screen recording link here (e.g. Google Drive, YouTube Unlisted)]
 
+  
+## 🎥 Demo UI (Optional but recommended)
+
+- https://omni-dimension.vercel.app/
 
 ## 📁 Project Structure
 .
