@@ -460,7 +460,7 @@
             <div class="voice-commands-info">
                 <strong>Voice Commands:</strong>
                 <ul>
-                    <li>"Bidding [amount] on [product name]" - Place a bid</li>
+                    <li>"Auction [amount] on [product name]" - Place a bid</li>
                     <li>"Show report" or "Generate report" - Display auction statistics</li>
                     <li>"Show history" - Display bidding history</li>
                     <li>"Highest bid" - Display the highest bid report</li>
@@ -580,15 +580,13 @@
         }
 
         function processVoiceCommand(command) {
-            // --- 1. Process Bidding Commands (Prioritize "bidding" and its variations) ---
-            // This regex now prioritizes "bidding" but still includes "bid", "bit", "big" for flexibility.
-            // The order in the regex matters for matching preference.
-            const bidPattern = /(?:bidding|b(?:i|e|a)d|b(?:i|e|a)t|b(?:i|e|a)g)\s+(?:a\s+|an\s+)?(\d+)\s+on\s+(.+)/i;
-            const bidMatch = command.match(bidPattern);
+            // --- 1. Process Auction Commands (Prioritize "auction" and its variations) ---
+            const auctionPattern = /(?:auction|b(?:i|e|a)d|b(?:i|e|a)t|b(?:i|e|a)g)\s+(?:a\s+|an\s+)?(\d+)\s+on\s+(.+)/i;
+            const auctionMatch = command.match(auctionPattern);
 
-            if (bidMatch) {
-                const bidAmount = parseInt(bidMatch[1]);
-                let rawProductName = bidMatch[2].trim();
+            if (auctionMatch) {
+                const bidAmount = parseInt(auctionMatch[1]);
+                let rawProductName = auctionMatch[2].trim();
                 
                 // Clean up product name by removing common trailing words if present
                 rawProductName = rawProductName
@@ -602,14 +600,13 @@
             }
 
             // --- 2. Process Report Commands ---
-            // Use more specific checks for report commands to avoid false positives
             if (command.includes('show report') || command.includes('generate report') || command.includes('report statistics')) {
                 generateBidCountReport();
                 updateVoiceStatus("✅ Generated bid count report", 'success');
                 return;
             }
 
-            if (command.includes('show history') || command.includes('bidding history') || command.includes('auction history')) {
+            if (command.includes('show history') || command.includes('auction history') || command.includes('bidding history')) {
                 generateFullHistoryReport();
                 updateVoiceStatus("✅ Generated bidding history", 'success');
                 return;
@@ -622,17 +619,15 @@
             }
 
             // --- 3. Fallback for Unrecognized Commands ---
-            updateVoiceStatus(`❓ Command not recognized: "${command}". Try "Bidding [amount] on [product name]".`, 'error');
+            updateVoiceStatus(`❓ Command not recognized: "${command}". Try "Auction [amount] on [product name]".`, 'error');
         }
 
         function handleVoiceBid(amount, productName) {
-            // Normalize product name for better matching
             const normalizedProductName = productName.toLowerCase();
 
             const product = auctionData.products.find(p => 
                 normalizedProductName.includes(p.name.toLowerCase()) ||
                 p.name.toLowerCase().includes(normalizedProductName) ||
-                // Add more flexible matching for common product names if the full name isn't matched
                 (normalizedProductName.includes('watch') && p.name.toLowerCase().includes('watch')) ||
                 (normalizedProductName.includes('vase') && p.name.toLowerCase().includes('vase')) ||
                 (normalizedProductName.includes('painting') && p.name.toLowerCase().includes('painting')) ||
@@ -667,7 +662,6 @@
                 };
             }
 
-            // Record the bid
             const bidRecord = {
                 amount: bidAmount,
                 bidder: bidder,
@@ -679,7 +673,6 @@
             product.currentBid = bidAmount;
             product.bidCount++;
 
-            // Update the UI
             renderProducts();
             simulateAuctionActivity();
 
@@ -788,7 +781,6 @@
 
         // Simulate auction activity
         function simulateAuctionActivity() {
-            // Add some randomness to make it feel more live
             setTimeout(() => {
                 if (Math.random() < 0.3) { // 30% chance
                     const randomProduct = auctionData.products[Math.floor(Math.random() * auctionData.products.length)];
